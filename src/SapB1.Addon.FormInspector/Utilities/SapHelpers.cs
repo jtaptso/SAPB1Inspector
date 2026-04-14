@@ -19,8 +19,29 @@ public class SapHelpers
     /// </summary>
     public string? GetCurrentUserName()
     {
-        // TODO: Use SwissAddonFramework.Application.User.Name
-        // or SAPbouiCOM.Application.Company.UserName
+#if B1UP_SDK
+        try
+        {
+            return SwissAddonFramework.Application.User.Name;
+        }
+        catch (Exception)
+        {
+            // SwissAddonFramework not available — fall through
+        }
+#endif
+#if SAP_UI_SDK
+        if (SapContext.IsInitialized && SapContext.Application != null)
+        {
+            try
+            {
+                return SapContext.Application.Company?.UserName;
+            }
+            catch (Exception)
+            {
+                // Company object may not be available — fall through
+            }
+        }
+#endif
         return Environment.UserName;
     }
 
@@ -29,7 +50,25 @@ public class SapHelpers
     /// </summary>
     public string? GetClientId()
     {
-        // TODO: Use SwissAddonFramework connection context
+#if SAP_UI_SDK
+        if (SapContext.IsInitialized && SapContext.Application != null)
+        {
+            try
+            {
+                // The Application doesn't expose a direct client ID,
+                // but we can derive one from the connection cookie or session info
+                var company = SapContext.Application.Company;
+                if (company != null)
+                {
+                    return $"{company.CompanyName}@{company.Server}";
+                }
+            }
+            catch (Exception)
+            {
+                // Company info may not be available
+            }
+        }
+#endif
         return null;
     }
 
@@ -38,7 +77,19 @@ public class SapHelpers
     /// </summary>
     public string? GetCompanyDb()
     {
-        // TODO: Use SAPbouiCOM.Application.Company.CompanyDB
+#if SAP_UI_SDK
+        if (SapContext.IsInitialized && SapContext.Application != null)
+        {
+            try
+            {
+                return SapContext.Application.Company?.CompanyDB;
+            }
+            catch (Exception)
+            {
+                // Company object may not be available
+            }
+        }
+#endif
         return null;
     }
 }

@@ -4,7 +4,9 @@ using SAPbouiCOM;
 #if B1UP_SDK
 using SwissAddonFramework.UI;
 #endif
+using System;
 using SapB1.Addon.FormInspector.Snapshot.SnapshotModels;
+using SapB1.Addon.FormInspector.Utilities;
 
 namespace SapB1.Addon.FormInspector.Inspection;
 
@@ -16,18 +18,38 @@ namespace SapB1.Addon.FormInspector.Inspection;
 public class FormInspectorService
 {
     /// <summary>
-    /// Inspects a form by its SAP form ID and returns form-level metadata.
+    /// Inspects a form by its SAP UniqueID and returns form-level metadata.
     /// </summary>
-    public FormDto InspectForm(int formId)
+    public FormDto InspectForm(string formUid)
     {
-        // TODO: Use SAPbouiCOM.Form to extract metadata
-        // var form = SwissAddonFramework.UI.Forms.GetForm(formId);
-        // return new FormDto { ... };
+#if SAP_UI_SDK
+        var form = SapContext.TryGetForm(formUid);
+        if (form != null)
+        {
+            try
+            {
+                var dto = new FormDto
+                {
+                    FormType = form.FormTypeEx ?? form.FormType ?? string.Empty,
+                    UniqueId = form.UniqueID ?? formUid,
+                    Title = form.Title ?? string.Empty,
+                    Mode = MapFormMode(form.Mode),
+                    PaneLevel = form.PaneLevel
+                };
 
+                System.Runtime.InteropServices.Marshal.ReleaseComObject(form);
+                return dto;
+            }
+            catch (Exception)
+            {
+                // Form may have been closed or is busy — fall through to default
+            }
+        }
+#endif
         return new FormDto
         {
             FormType = string.Empty,
-            UniqueId = formId.ToString(),
+            UniqueId = formUid,
             Title = string.Empty,
             Mode = "OK",
             PaneLevel = 0,
@@ -40,7 +62,36 @@ public class FormInspectorService
     /// </summary>
     public string? GetSapVersion()
     {
-        // TODO: Use SAPbouiCOM.Application.Company.Version
+#if SAP_UI_SDK
+        if (SapContext.IsInitialized && SapContext.Application != null)
+        {
+            try
+            {
+                return SapContext.Application.Company?.Version;
+            }
+            catch (Exception)
+            {
+                // Application or Company may not be available
+            }
+        }
+#endif
         return null;
     }
+
+#if SAP_UI_SDK
+    /// <summary>
+    /// Maps SAP BoFormMode enum to a string representation for the DTO.
+    /// </summary>
+    private static string MapFormMode(BoFormMode mode)
+    {
+        return mode switch
+        {
+            BoFormMode.fm_ADD => "ADD",
+            BoFormMode.fm_FIND => "FIND",
+            BoFormMode.fm_OK => "OK",
+            BoFormMode.fm_VIEW => "VIEW",
+            _ => mode.ToString()
+        };
+    }
+#endif
 }

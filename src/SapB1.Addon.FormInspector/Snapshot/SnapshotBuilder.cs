@@ -28,16 +28,11 @@ public class SnapshotBuilder
 
     /// <summary>
     /// Builds a complete snapshot from a form inspection result.
+    /// Uses the FormDto.UniqueId as the form UID for item-level inspection.
     /// </summary>
     public SnapshotDto Build(FormDto formData)
     {
-        var items = _itemInspector.InspectAllItems(int.Parse(formData.UniqueId));
-
-        // Enrich items with matrix metadata where applicable
-        foreach (var item in items.Where(i => i.ItemType == "Matrix" || i.ItemType == "Grid"))
-        {
-            // Matrix metadata is attached during item inspection
-        }
+        var items = _itemInspector.InspectAllItems(formData.UniqueId);
 
         return new SnapshotDto
         {

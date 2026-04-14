@@ -43,15 +43,24 @@ public class FormEventDispatcher
     /// </summary>
     public void RegisterHandlers()
     {
-        // TODO: Register with SwissAddonFramework event system
-        // SwissAddonFramework.UI.EventHandlers.FormLoad += OnFormLoad;
-        // SwissAddonFramework.UI.EventHandlers.FormActivate += OnFormActivate;
-        // SwissAddonFramework.UI.EventHandlers.FormVisible += OnFormVisible;
-        // SwissAddonFramework.UI.EventHandlers.FormModeChange += OnFormModeChange;
+#if B1UP_SDK
+        try
+        {
+            SwissAddonFramework.UI.EventHandlers.FormLoad += OnFormLoad;
+            SwissAddonFramework.UI.EventHandlers.FormActivate += OnFormActivate;
+            SwissAddonFramework.UI.EventHandlers.FormVisible += OnFormVisible;
+            SwissAddonFramework.UI.EventHandlers.FormModeChange += OnFormModeChange;
 
-        // Optional: PaneChange for pane-dependent items
-        // if (_settings.TrackPaneChanges)
-        //     SwissAddonFramework.UI.EventHandlers.PaneChange += OnPaneChange;
+            if (_settings.TrackPaneChanges)
+                SwissAddonFramework.UI.EventHandlers.PaneChange += OnPaneChange;
+        }
+        catch (Exception)
+        {
+            // SwissAddonFramework event registration failed — events won't fire
+        }
+#endif
+        // Without B1UP_SDK, event registration is a no-op.
+        // The dispatcher can still be triggered manually for testing.
     }
 
     /// <summary>
@@ -59,35 +68,50 @@ public class FormEventDispatcher
     /// </summary>
     public void UnregisterHandlers()
     {
-        // TODO: Unregister from SwissAddonFramework event system
+#if B1UP_SDK
+        try
+        {
+            SwissAddonFramework.UI.EventHandlers.FormLoad -= OnFormLoad;
+            SwissAddonFramework.UI.EventHandlers.FormActivate -= OnFormActivate;
+            SwissAddonFramework.UI.EventHandlers.FormVisible -= OnFormVisible;
+            SwissAddonFramework.UI.EventHandlers.FormModeChange -= OnFormModeChange;
+
+            if (_settings.TrackPaneChanges)
+                SwissAddonFramework.UI.EventHandlers.PaneChange -= OnPaneChange;
+        }
+        catch (Exception)
+        {
+            // SwissAddonFramework event unregistration failed
+        }
+#endif
     }
 
     private async void OnFormLoad(object? sender, FormEventArgs e)
     {
         if (!_throttler.ShouldProcess(e.FormType)) return;
 
-        await InspectAndPublishAsync(e.FormType, e.FormId);
+        await InspectAndPublishAsync(e.FormType, e.FormUid);
     }
 
     private async void OnFormActivate(object? sender, FormEventArgs e)
     {
         if (!_throttler.ShouldProcess(e.FormType)) return;
 
-        await InspectAndPublishAsync(e.FormType, e.FormId);
+        await InspectAndPublishAsync(e.FormType, e.FormUid);
     }
 
     private async void OnFormVisible(object? sender, FormEventArgs e)
     {
         if (!_throttler.ShouldProcess(e.FormType)) return;
 
-        await InspectAndPublishAsync(e.FormType, e.FormId);
+        await InspectAndPublishAsync(e.FormType, e.FormUid);
     }
 
     private async void OnFormModeChange(object? sender, FormEventArgs e)
     {
         if (!_throttler.ShouldProcess(e.FormType)) return;
 
-        await InspectAndPublishAsync(e.FormType, e.FormId);
+        await InspectAndPublishAsync(e.FormType, e.FormUid);
     }
 
     private async void OnPaneChange(object? sender, FormEventArgs e)
@@ -95,15 +119,16 @@ public class FormEventDispatcher
         if (!_settings.TrackPaneChanges) return;
         if (!_throttler.ShouldProcess(e.FormType)) return;
 
-        await InspectAndPublishAsync(e.FormType, e.FormId);
+        await InspectAndPublishAsync(e.FormType, e.FormUid);
     }
 
-    private async Task InspectAndPublishAsync(string formType, int formId)
+    private async Task InspectAndPublishAsync(string formType, string formUid)
     {
         try
         {
             // Inspect the form using SAP UI API
-            var formData = _formInspector.InspectForm(formId);
+            // formType is used for logging/filtering purposes by callers (throttle checks)
+            var formData = _formInspector.InspectForm(formUid);
 
             // Build a snapshot from the inspection data
             var snapshot = _snapshotBuilder.Build(formData);
@@ -124,6 +149,9 @@ public class FormEventDispatcher
 /// </summary>
 public class FormEventArgs : EventArgs
 {
+    /// <summary>The form type identifier (e.g., "139" for Sales Orders).</summary>
     public string FormType { get; set; } = string.Empty;
-    public int FormId { get; set; }
+
+    /// <summary>The unique identifier of the form instance in the SAP UI.</summary>
+    public string FormUid { get; set; } = string.Empty;
 }
