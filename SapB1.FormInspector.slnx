@@ -15,5 +15,6 @@
     <Project Path="tests/FormInspector.Application.Tests/FormInspector.Application.Tests.csproj" />
     <Project Path="tests/FormInspector.Domain.Tests/FormInspector.Domain.Tests.csproj" />
     <Project Path="tests/FormInspector.Infrastructure.Tests/FormInspector.Infrastructure.Tests.csproj" />
+    <Project Path="tests/SapB1.Addon.FormInspector.Tests/SapB1.Addon.FormInspector.Tests.csproj" />
   </Folder>
 </Solution>

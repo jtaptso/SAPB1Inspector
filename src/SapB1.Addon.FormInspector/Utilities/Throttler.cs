@@ -13,10 +13,17 @@ public class Throttler
 {
     private readonly InspectorSettings _settings;
     private readonly ConcurrentDictionary<string, DateTime> _lastProcessed = new ConcurrentDictionary<string, DateTime>();
+    private readonly Func<DateTime> _getNow;
 
     public Throttler(InspectorSettings settings)
+        : this(settings, () => DateTime.UtcNow)
+    {
+    }
+
+    public Throttler(InspectorSettings settings, Func<DateTime> getNow)
     {
         _settings = settings;
+        _getNow = getNow;
     }
 
     /// <summary>
@@ -25,7 +32,7 @@ public class Throttler
     /// </summary>
     public bool ShouldProcess(string formType)
     {
-        var now = DateTime.UtcNow;
+        var now = _getNow();
         var interval = TimeSpan.FromMilliseconds(_settings.ThrottleIntervalMs);
 
         if (_lastProcessed.TryGetValue(formType, out var lastProcessed))

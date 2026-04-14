@@ -41,7 +41,7 @@ public class FormEventDispatcher
     /// <summary>
     /// Registers SAP UI event handlers.
     /// </summary>
-    public void RegisterHandlers()
+    public virtual void RegisterHandlers()
     {
 #if B1UP_SDK
         try
@@ -66,7 +66,7 @@ public class FormEventDispatcher
     /// <summary>
     /// Unregisters SAP UI event handlers.
     /// </summary>
-    public void UnregisterHandlers()
+    public virtual void UnregisterHandlers()
     {
 #if B1UP_SDK
         try

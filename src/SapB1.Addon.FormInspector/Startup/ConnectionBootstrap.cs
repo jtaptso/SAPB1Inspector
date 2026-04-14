@@ -18,7 +18,7 @@ public class ConnectionBootstrap
     /// <summary>
     /// Establishes the connection to the SAP Business One client.
     /// </summary>
-    public void Connect()
+    public virtual void Connect()
     {
 #if B1UP_SDK
         try
@@ -56,7 +56,7 @@ public class ConnectionBootstrap
     /// <summary>
     /// Disconnects from the SAP Business One client gracefully.
     /// </summary>
-    public void Disconnect()
+    public virtual void Disconnect()
     {
         SapContext.Reset();
     }
