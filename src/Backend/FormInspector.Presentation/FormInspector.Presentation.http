@@ -1,0 +1,6 @@
+@FormInspector.Presentation_HostAddress = http://localhost:5283
+
+GET {{FormInspector.Presentation_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

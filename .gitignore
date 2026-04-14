@@ -1,0 +1,62 @@
+## .NET
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+## Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+## Rider
+.idea/
+
+## VS Code
+.vscode/
+
+## NuGet
+**/packages/*
+*.nupkg
+**/[Pp]ackages/**
+nuget.exe
+
+## Test results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.trx
+*.coverage
+*.coveragexml
+
+## ASP.NET
+App_Data/
+wwwroot/lib/
+
+## Publish profiles
+PublishProfiles/
+*.pubxml
+*.publishsettings
+
+## Blazor
+wwwroot/_framework/
+wwwroot/*.br
+wwwroot/*.gz
+
+## OS files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store

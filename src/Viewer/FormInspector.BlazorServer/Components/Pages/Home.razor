@@ -1,0 +1,155 @@
+@page "/"
+@using FormInspector.BlazorServer.Services
+@using FormInspector.Application.DTOs
+@inject SnapshotApiClient ApiClient
+@inject SignalRClient SignalR
+@implements IAsyncDisposable
+
+<PageTitle>Form Inspector - Dashboard</PageTitle>
+
+<div class="dashboard-header">
+    <h1>SAP B1 Form Inspector</h1>
+    <p class="lead">Semi-live inspection of SAP Business One UI form metadata</p>
+    <div class="connection-status">
+        <span class="status-dot @(SignalR.IsConnected ? "connected" : "disconnected")"></span>
+        <span>@(SignalR.IsConnected ? "Connected" : "Disconnected")</span>
+        @if (LastUpdatedAt.HasValue)
+        {
+            <span class="ms-3 text-muted">Last update: @LastUpdatedAt.Value.ToLocalTime().ToString("HH:mm:ss")</span>
+        }
+    </div>
+</div>
+
+@if (AvailableSnapshots.Count == 0 && !IsLoading)
+{
+    <div class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <h3>No Snapshots Available</h3>
+        <p>Waiting for form metadata from the SAP add-on...</p>
+        <p class="text-muted">Make sure the SAP add-on is running and the backend is accessible.</p>
+    </div>
+}
+else
+{
+    <div class="dashboard-grid">
+        <div class="snapshot-list">
+            <h5>Captured Forms</h5>
+            @foreach (var snapshot in AvailableSnapshots)
+            {
+                <div class="snapshot-card @(SelectedSnapshotId == snapshot.SnapshotId ? "selected" : "")"
+                     @onclick="() => SelectSnapshotAsync(snapshot)">
+                    <div class="snapshot-card-header">
+                        <strong>@snapshot.FormType</strong>
+                        <span class="badge @GetModeBadgeClass(snapshot.Mode)">@snapshot.Mode</span>
+                    </div>
+                    <div class="snapshot-card-body">
+                        <div>@snapshot.Title</div>
+                        <div class="text-muted small">@snapshot.ItemCount items · @snapshot.CapturedAt.ToLocalTime().ToString("HH:mm:ss")</div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="snapshot-detail">
+            @if (IsLoading)
+            {
+                <div class="loading-spinner">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            }
+            else if (SelectedSnapshot is not null)
+            {
+                <FormMetadataPanel Form="SelectedSnapshot.Form" Context="SelectedSnapshot.Context" />
+
+                <div class="item-section">
+                    <h5>Items (@SelectedSnapshot.Items.Count)</h5>
+                    <div class="item-browser">
+                        <ItemTreeView Items="SelectedSnapshot.Items"
+                                      SelectedItemUid="SelectedItemUid"
+                                      OnItemSelected="uid => SelectedItemUid = uid" />
+                        <ItemDetailsPanel Items="SelectedSnapshot.Items"
+                                          SelectedItemUid="SelectedItemUid" />
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="select-prompt">
+                    <p>Select a snapshot from the list to view its details.</p>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private IReadOnlyList<SnapshotSummaryDto> AvailableSnapshots = [];
+    private SnapshotOutputDto? SelectedSnapshot;
+    private string? SelectedSnapshotId;
+    private string? SelectedItemUid;
+    private bool IsLoading;
+    private DateTime? LastUpdatedAt;
+
+    protected override async Task OnInitializedAsync()
+    {
+        SignalR.OnSnapshotUpdated += OnSnapshotUpdatedAsync;
+        await SignalR.StartAsync();
+        await LoadSnapshotsAsync();
+    }
+
+    private async Task OnSnapshotUpdatedAsync(SnapshotUpdatedNotification notification)
+    {
+        LastUpdatedAt = notification.UpdatedAt;
+        await InvokeAsync(async () =>
+        {
+            await LoadSnapshotsAsync();
+            StateHasChanged();
+        });
+    }
+
+    private async Task LoadSnapshotsAsync()
+    {
+        IsLoading = true;
+        try
+        {
+            var snapshots = await ApiClient.GetAllSnapshotsAsync();
+            AvailableSnapshots = snapshots ?? [];
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task SelectSnapshotAsync(SnapshotSummaryDto summary)
+    {
+        SelectedSnapshotId = summary.SnapshotId;
+        IsLoading = true;
+        SelectedItemUid = null;
+        try
+        {
+            SelectedSnapshot = await ApiClient.GetSnapshotByIdAsync(summary.SnapshotId);
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private string GetModeBadgeClass(string mode) => mode?.ToUpperInvariant() switch
+    {
+        "ADD" => "bg-success",
+        "FIND" => "bg-info",
+        "UPDATE" => "bg-warning text-dark",
+        "OK" => "bg-secondary",
+        _ => "bg-secondary"
+    };
+
+    public async ValueTask DisposeAsync()
+    {
+        SignalR.OnSnapshotUpdated -= OnSnapshotUpdatedAsync;
+        await SignalR.DisposeAsync();
+    }
+}

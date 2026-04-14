@@ -1,0 +1,86 @@
+@using FormInspector.Application.DTOs
+
+<div class="item-details-panel card">
+    <div class="card-header">
+        <h6 class="mb-0">Item Details</h6>
+    </div>
+    <div class="card-body">
+        @{
+            var item = Items.FirstOrDefault(i => i.ItemUid == SelectedItemUid);
+        }
+        @if (item is null)
+        {
+            <p class="text-muted">Select an item from the tree to view details.</p>
+        }
+        else
+        {
+            <div class="detail-grid">
+                <div class="detail-row">
+                    <span class="detail-label">UID</span>
+                    <span class="detail-value"><code>@item.ItemUid</code></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Type</span>
+                    <span class="detail-value">@item.ItemType</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Visible</span>
+                    <span class="detail-value">@(item.Visible ? "✅ Yes" : "❌ No")</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Enabled</span>
+                    <span class="detail-value">@(item.Enabled ? "✅ Yes" : "❌ No")</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Position</span>
+                    <span class="detail-value">Top: @item.Layout.Top, Left: @item.Layout.Left</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Size</span>
+                    <span class="detail-value">W: @item.Layout.Width × H: @item.Layout.Height</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Pane Range</span>
+                    <span class="detail-value">@item.FromPane → @item.ToPane</span>
+                </div>
+                @if (item.Description is not null)
+                {
+                    <div class="detail-row">
+                        <span class="detail-label">Description</span>
+                        <span class="detail-value">@item.Description</span>
+                    </div>
+                }
+            </div>
+
+            @if (item.DataBinding is not null)
+            {
+                <hr />
+                <h6 class="small text-muted">Data Binding</h6>
+                <div class="detail-grid">
+                    <div class="detail-row">
+                        <span class="detail-label">Table</span>
+                        <span class="detail-value"><code>@item.DataBinding.TableName</code></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Column</span>
+                        <span class="detail-value"><code>@item.DataBinding.ColumnName</code></span>
+                    </div>
+                </div>
+            }
+
+            @if (item.MatrixMetadata is not null)
+            {
+                <hr />
+                <MatrixViewer Matrix="item.MatrixMetadata" />
+            }
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public IReadOnlyList<ItemMetadataDto> Items { get; set; } = [];
+
+    [Parameter]
+    public string? SelectedItemUid { get; set; }
+}

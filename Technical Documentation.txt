@@ -1,0 +1,456 @@
+Technical Documentation
+SAP Business One Form Metadata Inspector
+SwissAddonFramework · Semi‑Live · Blazor Viewer · Clean Architecture Backend
+1. Purpose and Scope
+1.1 Purpose
+The goal of this project is to build a semi‑live inspection system that captures SAP Business One UI form metadata at runtime and exposes it through a web‑based Blazor viewer.
+
+The system is designed for:
+
+SAP Business One add‑on developers
+
+Technical consultants
+
+Internal diagnostics, UI reverse‑engineering, and documentation
+
+Regression analysis before and after SAP upgrades
+
+1.2 Scope
+In Scope
+Runtime inspection of SAP B1 UI forms
+
+SAP standard and add‑on forms
+
+System fields, UDFs, matrices, and grids
+
+Read‑only metadata extraction
+
+Semi‑live updates driven by form events
+
+Clean Architecture backend design
+
+Out of Scope
+Modifying SAP UI
+
+Posting or changing business data
+
+DI API usage
+
+External tools accessing SAP APIs directly
+
+2. Architecture Overview
+2.1 High‑Level System Architecture
++-----------------------------+
+
+| SAP Business One Client     |
+
+|                             |
+
+| SwissAddonFramework Add-on  |
+
+|  - UI Event Listener        |
+
+|  - Form Inspector           |
+
+|  - JSON Snapshot Builder    |
+
+|  - REST Publisher           |
+
++--------------+--------------+
+
+               |
+
+               | HTTP / JSON
+
+               v
+
++-----------------------------+
+
+| Backend (Clean Architecture)|
+
+|                             |
+
+| Presentation Layer          |
+
+|  - REST Controllers         |
+
+|  - SignalR Hub              |
+
+|                             |
+
+| Application Layer           |
+
+|  - Use Cases                |
+
+|  - Interfaces (Ports)       |
+
+|                             |
+
+| Domain Layer                |
+
+|  - Snapshot Model           |
+
+|  - Business Rules           |
+
+|                             |
+
+| Infrastructure Layer        |
+
+|  - Storage                  |
+
+|  - SignalR Adapter          |
+
+|  - Serialization            |
+
++--------------+--------------+
+
+               |
+
+               | SignalR
+
+               v
+
++-----------------------------+
+
+| Blazor Server Viewer        |
+
+|  - Live Form Tree           |
+
+|  - Field Details            |
+
+|  - Semi‑Live Updates        |
+
++-----------------------------+
+
+
+3. Architectural Principles
+The backend strictly follows Clean Architecture:
+
+Domain is the core and has no dependencies
+
+Application defines use cases and depends only on Domain
+
+Infrastructure implements interfaces defined by Application
+
+Presentation is a thin delivery layer (Web API, SignalR)
+
+Dependency Rule
+Dependencies must always point towards the Domain
+
+✅ Allowed:
+
+Presentation → Application → Domain
+
+Infrastructure → Application → Domain
+
+
+❌ Forbidden:
+
+Domain → Application
+
+Application → Infrastructure
+
+Domain → ASP.NET / SignalR
+
+
+4. SAP Add‑On (SwissAddonFramework)
+4.1 Responsibilities
+The SAP add‑on acts as a passive observer:
+
+Listens to selected SAP UI events
+
+Inspects visible forms at runtime
+
+Builds metadata snapshots
+
+Sends snapshots to the backend
+
+The add‑on:
+
+Does not modify the UI
+
+Does not use the DI API
+
+Does not persist data
+
+4.2 Event Handling Strategy (Semi‑Live)
+The add‑on subscribes only to structural UI events:
+
+Event
+
+Reason
+
+FormLoad
+
+Initial structure
+
+FormActivate
+
+Context switch
+
+FormVisible
+
+Late‑loaded items
+
+FormModeChange
+
+Mode‑based UI changes
+
+PaneChange (optional)
+
+Pane‑dependent items
+
+Events like key presses or validations are intentionally excluded to avoid UI freezes.
+
+4.3 Form Inspection
+Using SwissAddonFramework plus the underlying SAP UI API, the inspector extracts:
+
+Form Metadata
+FormType
+
+UniqueID
+
+Title
+
+Mode (ADD / OK / FIND)
+
+PaneLevel
+
+SAP client version
+
+Item Metadata
+For each item:
+
+UID
+
+ItemType
+
+Position and size
+
+Visibility / Enabled
+
+FromPane / ToPane
+
+Data bindings (table + column)
+
+Matrix & Grid Metadata
+Matrix UID
+
+Column UID
+
+Column type
+
+Data bindings
+
+Editable flags
+
+4.4 Snapshot Creation
+The inspector builds a pure metadata snapshot, serialized into JSON:
+
+No SAP objects
+
+No COM references
+
+Stable, versioned schema
+
+Snapshots are sent to the backend via HTTP POST.
+
+5. Backend – Clean Architecture Design
+The backend is implemented as a multi‑project Clean Architecture solution.
+
+6. Domain Layer
+6.1 Responsibility
+The Domain defines what exists, not how it is delivered or stored.
+
+It contains:
+
+Entities
+
+Value objects
+
+Structural rules
+
+It contains no:
+
+ASP.NET
+
+SignalR
+
+JSON
+
+SAP knowledge
+
+6.2 Core Domain Concepts
+Snapshot (Aggregate Root)
+Represents one captured SAP UI state.
+
+Properties:
+
+SnapshotId
+
+CapturedAt
+
+Context (User, Machine, Client)
+
+FormMetadata
+
+Collection of ItemMetadata
+
+FormMetadata
+FormType
+
+Title
+
+Mode
+
+PaneLevel
+
+ItemMetadata
+ItemUid
+
+ItemType
+
+Layout (position, size)
+
+Visibility
+
+Enabled
+
+DataBinding
+
+MatrixMetadata / ColumnMetadata
+Used for line‑level UI representation.
+
+7. Application Layer
+7.1 Responsibility
+The Application layer defines:
+
+What the system can do
+
+It orchestrates Domain logic using interfaces (ports).
+
+7.2 Use Cases
+ReceiveSnapshot
+Validates snapshot schema version
+
+Updates latest snapshot for the same context
+
+Triggers a “snapshot updated” notification
+
+GetLatestSnapshot
+Retrieves the most recent snapshot for a given filter
+
+7.3 Interfaces (Ports)
+ISnapshotRepository
+
+ISnapshotNotifier
+
+IClock / ITimeProvider
+
+These interfaces are implemented in Infrastructure.
+
+7.4 Key Benefit
+All application logic:
+
+Is testable without ASP.NET
+
+Is independent of SignalR
+
+Is independent of persistence technology
+
+8. Infrastructure Layer
+8.1 Responsibility
+Infrastructure implements technical details:
+
+Persistence
+
+Serialization
+
+SignalR integration
+
+Caching
+
+8.2 Persistence Adapter
+Implements ISnapshotRepository.
+
+Possible storage mechanisms:
+
+In‑memory (MVP)
+SQLite
+SQL Server
+Redis (future)
+The Application layer does not know which one is used.
+
+8.3 SignalR Adapter
+Implements ISnapshotNotifier.
+
+Responsibilities:
+
+Broadcast snapshot updates
+Abstract SignalR away from Application logic
+9. Presentation Layer
+9.1 REST API
+Responsibilities:
+
+Accept HTTP POST from SAP add‑on
+Deserialize JSON into Application DTOs
+Call Application use cases
+Return HTTP success/failure
+Controllers contain no business logic.
+
+9.2 SignalR Hub
+Responsibilities:
+
+Manage viewer connections
+Forward snapshot update notifications
+Group clients if required
+The hub does not access repositories or Domain objects directly.
+
+10. Blazor Server Viewer
+10.1 Responsibilities
+The viewer:
+
+Displays the latest snapshots
+Automatically refreshes via SignalR
+Provides a structured UI for form inspection
+10.2 UI Components
+Form/session selector
+Form metadata panel
+Hierarchical item tree
+Details view for individual items
+Matrix/column inspection view
+10.3 Semi‑Live Behavior
+SAP add‑on publishes snapshot
+Backend stores snapshot
+Application triggers update
+SignalR broadcasts notification
+Blazor UI refreshes automatically
+No polling SAP. No direct SAP access from the browser.
+
+11. Safety, Performance, and Stability
+SAP Client
+Read‑only operations only
+Event throttling
+No UI blocking logic
+Backend
+No SAP dependencies
+Stateless API
+Clear separation of concerns
+12. Extensibility
+The architecture allows future additions without refactoring core logic:
+
+Snapshot diffing
+SAP upgrade comparisons
+Multi‑client monitoring
+Documentation export
+Authorization overlays
+13. Conclusion
+This implementation:
+
+Respects SAP Business One constraints
+Leverages SwissAddonFramework correctly
+Applies Clean Architecture rigorously
+Supports semi‑live, safe, and scalable inspection
+Is maintainable long‑term
+Scan inside SAP. Understand outside SAP.
+Handle change by design, not by refactoring.

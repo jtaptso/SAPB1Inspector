@@ -1,0 +1,19 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SapB1.Addon.FormInspector/SapB1.Addon.FormInspector.csproj" />
+  </Folder>
+  <Folder Name="/src/Backend/">
+    <Project Path="src/Backend/FormInspector.Application/FormInspector.Application.csproj" />
+    <Project Path="src/Backend/FormInspector.Domain/FormInspector.Domain.csproj" />
+    <Project Path="src/Backend/FormInspector.Infrastructure/FormInspector.Infrastructure.csproj" />
+    <Project Path="src/Backend/FormInspector.Presentation/FormInspector.Presentation.csproj" />
+  </Folder>
+  <Folder Name="/src/Viewer/">
+    <Project Path="src/Viewer/FormInspector.BlazorServer/FormInspector.BlazorServer.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/FormInspector.Application.Tests/FormInspector.Application.Tests.csproj" />
+    <Project Path="tests/FormInspector.Domain.Tests/FormInspector.Domain.Tests.csproj" />
+    <Project Path="tests/FormInspector.Infrastructure.Tests/FormInspector.Infrastructure.Tests.csproj" />
+  </Folder>
+</Solution>

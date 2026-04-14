@@ -1,0 +1,83 @@
+@using FormInspector.Application.DTOs
+
+<div class="item-tree-view">
+    <div class="tree-header">
+        <input type="text" class="form-control form-control-sm" placeholder="Search items..."
+               @bind="SearchFilter" @bind:event="oninput" />
+    </div>
+    <div class="tree-content">
+        @foreach (var item in GetFilteredItems())
+        {
+            <div class="tree-item @(SelectedItemUid == item.ItemUid ? "selected" : "")"
+                 @onclick="() => OnItemSelected.InvokeAsync(item.ItemUid)">
+                <span class="item-icon @GetItemIconClass(item.ItemType)">@GetItemIcon(item.ItemType)</span>
+                <span class="item-uid">@item.ItemUid</span>
+                <span class="item-type-badge">@item.ItemType</span>
+                @if (!item.Visible)
+                {
+                    <span class="visibility-badge hidden" title="Hidden">👁️‍🗨️</span>
+                }
+                @if (!item.Enabled)
+                {
+                    <span class="visibility-badge disabled" title="Disabled">🚫</span>
+                }
+                @if (item.DataBinding is not null)
+                {
+                    <span class="binding-indicator" title="@item.DataBinding.TableName.@item.DataBinding.ColumnName">🔗</span>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public IReadOnlyList<ItemMetadataDto> Items { get; set; } = [];
+
+    [Parameter]
+    public string? SelectedItemUid { get; set; }
+
+    [Parameter]
+    public EventCallback<string> OnItemSelected { get; set; }
+
+    private string SearchFilter { get; set; } = "";
+
+    private IEnumerable<ItemMetadataDto> GetFilteredItems()
+    {
+        var items = Items.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(SearchFilter))
+        {
+            var filter = SearchFilter.ToLowerInvariant();
+            items = items.Where(i =>
+                i.ItemUid.ToLowerInvariant().Contains(filter) ||
+                i.ItemType.ToLowerInvariant().Contains(filter) ||
+                (i.Description?.ToLowerInvariant().Contains(filter) ?? false));
+        }
+
+        return items.OrderBy(i => i.ItemUid).ToList();
+    }
+
+    private string GetItemIcon(string itemType) => itemType?.ToLowerInvariant() switch
+    {
+        "edittext" => "📝",
+        "button" => "🔘",
+        "checkbox" => "☑️",
+        "combobox" => "📋",
+        "matrix" => "📊",
+        "grid" => "📊",
+        "statictext" => "🏷️",
+        "linkedbutton" => "🔗",
+        "picture" => "🖼️",
+        "folder" => "📁",
+        "frame" => "📦",
+        "optionbtn" => "⚪",
+        _ => "❓"
+    };
+
+    private string GetItemIconClass(string itemType) => itemType?.ToLowerInvariant() switch
+    {
+        "matrix" or "grid" => "matrix-icon",
+        _ => ""
+    };
+}

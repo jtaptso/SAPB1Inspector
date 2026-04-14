@@ -1,0 +1,221 @@
+Solution Structure (Top Level)
+SapB1.FormInspector.sln
+ │
+ ├─ src/
+ │  ├─ SapB1.Addon.FormInspector/
+ │  ├─ Backend/
+ │  │  ├─ FormInspector.Domain/
+ │  │  ├─ FormInspector.Application/
+ │  │  ├─ FormInspector.Infrastructure/
+ │  │  └─ FormInspector.Presentation/
+ │  └─ Viewer/
+ │ 	└─ FormInspector.BlazorServer/
+ │
+ ├─ tests/
+ │  ├─ FormInspector.Domain.Tests/
+ │  ├─ FormInspector.Application.Tests/
+ │  └─ FormInspector.Infrastructure.Tests/
+ │
+ └─ docs/
+ 
+✅ 1. SAP Add‑On Project Structure
+Purpose: Inspect SAP B1 UI forms at runtime and publish snapshots
+Framework: SwissAddonFramework + SAPbouiCOM
+Architecture role: External producer (not part of Clean Architecture)
+SapB1.Addon.FormInspector/
+ ├─ Startup/
+ │  ├─ AddonStartup.cs
+ │  └─ ConnectionBootstrap.cs
+ │
+ ├─ Events/
+ │  ├─ FormEventDispatcher.cs
+ │  └─ FormEventFilters.cs
+ │
+ ├─ Inspection/
+ │  ├─ FormInspector.cs
+ │  ├─ ItemInspector.cs
+ │  ├─ MatrixInspector.cs
+ │  └─ DataSourceInspector.cs
+ │
+ ├─ Snapshot/
+ │  ├─ SnapshotBuilder.cs
+ │  ├─ SnapshotModels/
+ │  │  ├─ SnapshotDto.cs
+ │  │  ├─ FormDto.cs
+ │  │  ├─ ItemDto.cs
+ │  │  └─ MatrixDto.cs
+ │  └─ SnapshotSerializer.cs
+ │
+ ├─ Publishing/
+ │  ├─ SnapshotPublisher.cs
+ │  └─ HttpPublisher.cs
+ │
+ ├─ Configuration/
+ │  └─ InspectorSettings.cs
+ │
+ └─ Utilities/
+    ├─ Throttler.cs
+    └─ SapHelpers.cs
+Why this structure
+Clear separation between event handling, inspection, and publishing
+Snapshot DTOs are isolated and SAP‑free
+Easy to later add:
+throttling
+filtering
+configuration flags
+ 
+✅ 2. Backend – Clean Architecture Structure
+The backend is split into four projects, each with a single responsibility.
+ 
+2.1 Domain Layer
+Pure business model – zero framework dependencies
+FormInspector.Domain/
+ ├─ Snapshots/
+ │  ├─ Snapshot.cs
+ │  ├─ FormMetadata.cs
+ │  ├─ ItemMetadata.cs
+ │  ├─ MatrixMetadata.cs
+ │  └─ ColumnMetadata.cs
+ │
+ ├─ ValueObjects/
+ │  ├─ FormType.cs
+ │  ├─ ItemType.cs
+ │  ├─ DataBinding.cs
+ │  └─ Layout.cs
+ │
+ ├─ Enums/
+ │  ├─ FormMode.cs
+ │  └─ VisibilityState.cs
+ │
+ └─ Common/
+    └─ EntityBase.cs
+Why
+Domain expresses what exists, not how
+Snapshot becomes an aggregate root
+Enables future features like:
+snapshot diffing
+replay
+validation rules
+ 
+2.2 Application Layer
+Use cases, orchestration, business rules
+FormInspector.Application/
+ ├─ Interfaces/
+ │  ├─ ISnapshotRepository.cs
+ │  ├─ ISnapshotNotifier.cs
+ │  └─ ITimeProvider.cs
+ │
+ ├─ UseCases/
+ │  ├─ ReceiveSnapshot/
+ │  │  ├─ ReceiveSnapshotCommand.cs
+ │  │  └─ ReceiveSnapshotHandler.cs
+ │  │
+ │  ├─ GetLatestSnapshot/
+ │  │  ├─ GetLatestSnapshotQuery.cs
+ │  │  └─ GetLatestSnapshotHandler.cs
+ │
+ ├─ DTOs/
+ │  ├─ SnapshotInputDto.cs
+ │  └─ SnapshotOutputDto.cs
+ │
+ └─ Mapping/
+    └─ SnapshotMapper.cs
+Why
+Business logic lives outside ASP.NET
+Easy to test in isolation
+Ports (interfaces) prevent infrastructure lock‑in
+ 
+2.3 Infrastructure Layer
+Technical details & adapters
+FormInspector.Infrastructure/
+ ├─ Persistence/
+ │  ├─ InMemorySnapshotRepository.cs
+ │  ├─ SnapshotCache.cs
+ │  └─ PersistenceConfig.cs
+ │
+ ├─ Notifications/
+ │  ├─ SignalRSnapshotNotifier.cs
+ │  └─ NotificationContracts.cs
+ │
+ ├─ Serialization/
+ │  └─ SnapshotJsonMapper.cs
+ │
+ ├─ Time/
+ │  └─ SystemTimeProvider.cs
+ │
+ └─ DependencyInjection/
+    └─ InfrastructureModule.cs
+Why
+Completely replaceable (DB, cache, messaging)
+Zero leakage into Domain or Application
+SignalR is hidden behind an interface
+ 
+2.4 Presentation Layer (ASP.NET / SignalR)
+Delivery mechanism only
+FormInspector.Presentation/
+ ├─ Controllers/
+ │  └─ SnapshotController.cs
+ │
+ ├─ Hubs/
+ │  └─ SnapshotHub.cs
+ │
+ ├─ Models/
+ │  ├─ SnapshotRequestModel.cs
+ │  └─ SnapshotResponseModel.cs
+ │
+ ├─ Filters/
+ │  └─ ApiExceptionFilter.cs
+ │
+ └─ Program.cs
+Why
+Thin controllers
+No business logic
+Easy to replace REST with something else later
+ 
+✅ 3. Blazor Server Viewer Structure
+Read‑only, reactive UI
+FormInspector.BlazorServer/
+ ├─ Pages/
+ │  ├─ Index.razor
+ │  └─ SnapshotViewer.razor
+ │
+ ├─ Components/
+ │  ├─ FormSelector.razor
+ │  ├─ FormMetadataPanel.razor
+ │  ├─ ItemTreeView.razor
+ │  ├─ ItemDetailsPanel.razor
+ │  └─ MatrixViewer.razor
+ │
+ ├─ Services/
+ │  ├─ SnapshotApiClient.cs
+ │  └─ SignalRClient.cs
+ │
+ ├─ Models/
+ │  └─ ViewModels/
+ │
+ └─ Shared/
+    ├─ MainLayout.razor
+    └─ NavMenu.razor
+Why
+Components map 1:1 to inspection concepts
+Services abstract network logic
+Viewer stays SAP‑agnostic
+ 
+✅ 4. Tests Structure
+tests/
+ ├─ FormInspector.Domain.Tests/
+ ├─ FormInspector.Application.Tests/
+ └─ FormInspector.Infrastructure.Tests/
+Why
+You can test:
+snapshot validity
+replace logic
+notification triggering
+No SAP required for backend tests
+ 
+✅ 5. docs/
+docs/
+ ├─ architecture.md
+ ├─ snapshot-schema.md
+ ├─ backend-clean-architecture.md
+ └─ sap-addon-notes.md

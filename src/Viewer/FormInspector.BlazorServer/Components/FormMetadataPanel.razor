@@ -1,0 +1,86 @@
+@using FormInspector.Application.DTOs
+
+<div class="form-metadata-panel card">
+    <div class="card-header">
+        <h6 class="mb-0">Form Metadata</h6>
+    </div>
+    <div class="card-body">
+        <div class="metadata-grid">
+            <div class="metadata-item">
+                <span class="metadata-label">Form Type</span>
+                <span class="metadata-value"><code>@Form.FormType</code></span>
+            </div>
+            <div class="metadata-item">
+                <span class="metadata-label">Unique ID</span>
+                <span class="metadata-value"><code>@Form.UniqueId</code></span>
+            </div>
+            <div class="metadata-item">
+                <span class="metadata-label">Title</span>
+                <span class="metadata-value">@Form.Title</span>
+            </div>
+            <div class="metadata-item">
+                <span class="metadata-label">Mode</span>
+                <span class="badge @GetModeBadgeClass(Form.Mode)">@Form.Mode</span>
+            </div>
+            <div class="metadata-item">
+                <span class="metadata-label">Pane Level</span>
+                <span class="metadata-value">@Form.PaneLevel</span>
+            </div>
+            @if (Form.SapVersion is not null)
+            {
+                <div class="metadata-item">
+                    <span class="metadata-label">SAP Version</span>
+                    <span class="metadata-value">@Form.SapVersion</span>
+                </div>
+            }
+        </div>
+
+        @if (Context is not null)
+        {
+            <hr />
+            <div class="context-section">
+                <h6 class="small text-muted">Context</h6>
+                <div class="metadata-grid">
+                    @if (Context.UserName is not null)
+                    {
+                        <div class="metadata-item">
+                            <span class="metadata-label">User</span>
+                            <span class="metadata-value">@Context.UserName</span>
+                        </div>
+                    }
+                    @if (Context.MachineName is not null)
+                    {
+                        <div class="metadata-item">
+                            <span class="metadata-label">Machine</span>
+                            <span class="metadata-value">@Context.MachineName</span>
+                        </div>
+                    }
+                    @if (Context.ClientId is not null)
+                    {
+                        <div class="metadata-item">
+                            <span class="metadata-label">Client</span>
+                            <span class="metadata-value"><code>@Context.ClientId</code></span>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public FormMetadataDto Form { get; set; } = null!;
+
+    [Parameter]
+    public SnapshotContextDto? Context { get; set; }
+
+    private string GetModeBadgeClass(string mode) => mode?.ToUpperInvariant() switch
+    {
+        "ADD" => "bg-success",
+        "FIND" => "bg-info",
+        "UPDATE" => "bg-warning text-dark",
+        "OK" => "bg-secondary",
+        _ => "bg-secondary"
+    };
+}

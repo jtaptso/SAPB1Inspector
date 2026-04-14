@@ -1,0 +1,28 @@
+@using FormInspector.Application.DTOs
+
+<div class="form-selector">
+    <label class="form-label">Select Form</label>
+    <select class="form-select" @bind="SelectedFormType" @bind:event="onchange" @bind:after="OnSelectionChanged">
+        <option value="">-- Select a form --</option>
+        @foreach (var snapshot in Snapshots)
+        {
+            <option value="@snapshot.FormType">@snapshot.FormType - @snapshot.Title</option>
+        }
+    </select>
+</div>
+
+@code {
+    [Parameter]
+    public IReadOnlyList<SnapshotSummaryDto> Snapshots { get; set; } = [];
+
+    [Parameter]
+    public string? SelectedFormType { get; set; }
+
+    [Parameter]
+    public EventCallback<string?> OnFormSelected { get; set; }
+
+    private async Task OnSelectionChanged()
+    {
+        await OnFormSelected.InvokeAsync(SelectedFormType);
+    }
+}
