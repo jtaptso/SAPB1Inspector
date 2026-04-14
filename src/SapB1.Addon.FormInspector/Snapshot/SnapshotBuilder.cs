@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using SapB1.Addon.FormInspector.Inspection;
 using SapB1.Addon.FormInspector.Snapshot.SnapshotModels;
 
@@ -57,10 +59,12 @@ public class SnapshotBuilder
     {
         var snapshot = Build(formData);
 
-        return snapshot with
-        {
-            UserName = userName ?? snapshot.UserName,
-            MachineName = machineName ?? snapshot.MachineName
-        };
+        // Apply context overrides (replaces 'with' expression which requires record types)
+        if (userName != null)
+            snapshot.UserName = userName;
+        if (machineName != null)
+            snapshot.MachineName = machineName;
+
+        return snapshot;
     }
 }

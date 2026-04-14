@@ -1,4 +1,7 @@
+using System;
+using System.Net.Http;
 using System.Text;
+using System.Threading.Tasks;
 using SapB1.Addon.FormInspector.Configuration;
 
 namespace SapB1.Addon.FormInspector.Publishing;

@@ -10,7 +10,7 @@ namespace SapB1.Addon.FormInspector.Snapshot;
 /// </summary>
 public static class SnapshotSerializer
 {
-    private static readonly JsonSerializerOptions Options = new()
+    private static readonly JsonSerializerOptions Options = new JsonSerializerOptions
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         WriteIndented = false,

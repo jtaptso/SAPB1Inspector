@@ -54,6 +54,9 @@ wwwroot/_framework/
 wwwroot/*.br
 wwwroot/*.gz
 
+## SAP SDK DLLs (proprietary — do not commit)
+lib/*.dll
+
 ## OS files
 Thumbs.db
 ehthumbs.db

@@ -1,3 +1,7 @@
+#if SAP_UI_SDK
+using SAPbouiCOM;
+#endif
+using System.Collections.Generic;
 using SapB1.Addon.FormInspector.Snapshot.SnapshotModels;
 
 namespace SapB1.Addon.FormInspector.Inspection;
@@ -16,7 +20,7 @@ public class DataSourceInspector
     {
         // TODO: Use SAPbouiCOM.Form.DataSources.DBDataSources
         // to extract table names and column bindings
-        return [];
+        return new List<DataSourceInfo>();
     }
 
     /// <summary>
@@ -33,8 +37,8 @@ public class DataSourceInspector
 /// <summary>
 /// Information about a DB data source on an SAP form.
 /// </summary>
-public record DataSourceInfo
+public class DataSourceInfo
 {
-    public string TableName { get; init; } = string.Empty;
-    public List<string> Aliases { get; init; } = [];
+    public string TableName { get; set; } = string.Empty;
+    public List<string> Aliases { get; set; } = new List<string>();
 }

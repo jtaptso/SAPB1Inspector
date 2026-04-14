@@ -1,3 +1,8 @@
+#if B1UP_SDK
+using SwissAddonFramework.UI.EventHandlers;
+#endif
+using System;
+using System.Threading.Tasks;
 using SapB1.Addon.FormInspector.Inspection;
 using SapB1.Addon.FormInspector.Snapshot;
 using SapB1.Addon.FormInspector.Publishing;
@@ -119,6 +124,6 @@ public class FormEventDispatcher
 /// </summary>
 public class FormEventArgs : EventArgs
 {
-    public string FormType { get; init; } = string.Empty;
-    public int FormId { get; init; }
+    public string FormType { get; set; } = string.Empty;
+    public int FormId { get; set; }
 }

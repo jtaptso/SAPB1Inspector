@@ -1,3 +1,10 @@
+#if SAP_UI_SDK
+using SAPbouiCOM;
+#endif
+#if B1UP_SDK
+using SwissAddonFramework.UI;
+#endif
+using System.Collections.Generic;
 using SapB1.Addon.FormInspector.Snapshot.SnapshotModels;
 
 namespace SapB1.Addon.FormInspector.Inspection;
@@ -42,6 +49,6 @@ public class ItemInspector
         // var form = SwissAddonFramework.UI.Forms.GetForm(formId);
         // for (int i = 0; i < form.Items.Count; i++) { ... }
 
-        return [];
+        return new List<ItemDto>();
     }
 }

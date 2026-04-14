@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Concurrent;
 using SapB1.Addon.FormInspector.Configuration;
 
@@ -11,7 +12,7 @@ namespace SapB1.Addon.FormInspector.Utilities;
 public class Throttler
 {
     private readonly InspectorSettings _settings;
-    private readonly ConcurrentDictionary<string, DateTime> _lastProcessed = new();
+    private readonly ConcurrentDictionary<string, DateTime> _lastProcessed = new ConcurrentDictionary<string, DateTime>();
 
     public Throttler(InspectorSettings settings)
     {

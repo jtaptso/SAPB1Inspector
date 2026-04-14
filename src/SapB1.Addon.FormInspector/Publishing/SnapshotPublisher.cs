@@ -1,3 +1,6 @@
+using System;
+using System.Net.Http;
+using System.Threading.Tasks;
 using SapB1.Addon.FormInspector.Snapshot;
 using SapB1.Addon.FormInspector.Snapshot.SnapshotModels;
 

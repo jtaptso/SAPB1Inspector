@@ -1,3 +1,6 @@
+#if B1UP_SDK
+using SwissAddonFramework.Hosting;
+#endif
 using SapB1.Addon.FormInspector.Events;
 
 namespace SapB1.Addon.FormInspector.Startup;

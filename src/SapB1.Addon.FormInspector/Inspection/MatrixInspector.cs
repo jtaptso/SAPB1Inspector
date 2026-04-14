@@ -1,3 +1,7 @@
+#if SAP_UI_SDK
+using SAPbouiCOM;
+#endif
+using System.Collections.Generic;
 using SapB1.Addon.FormInspector.Snapshot.SnapshotModels;
 
 namespace SapB1.Addon.FormInspector.Inspection;
@@ -23,7 +27,7 @@ public class MatrixInspector
             MatrixUid = matrixUid,
             RowCount = 0,
             Editable = true,
-            Columns = []
+            Columns = new List<ColumnDto>()
         };
     }
 
@@ -33,6 +37,6 @@ public class MatrixInspector
     public List<MatrixDto> InspectAllMatrices(int formId)
     {
         // TODO: Find all matrix-type items and inspect each
-        return [];
+        return new List<MatrixDto>();
     }
 }

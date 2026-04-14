@@ -1,3 +1,11 @@
+#if SAP_UI_SDK
+using SAPbouiCOM;
+#endif
+#if B1UP_SDK
+using SwissAddonFramework.Application;
+#endif
+using System;
+
 namespace SapB1.Addon.FormInspector.Utilities;
 
 /// <summary>

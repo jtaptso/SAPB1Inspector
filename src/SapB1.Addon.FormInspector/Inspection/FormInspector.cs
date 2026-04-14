@@ -1,3 +1,9 @@
+#if SAP_UI_SDK
+using SAPbouiCOM;
+#endif
+#if B1UP_SDK
+using SwissAddonFramework.UI;
+#endif
 using SapB1.Addon.FormInspector.Snapshot.SnapshotModels;
 
 namespace SapB1.Addon.FormInspector.Inspection;

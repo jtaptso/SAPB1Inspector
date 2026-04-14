@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace SapB1.Addon.FormInspector.Configuration;
 
 /// <summary>

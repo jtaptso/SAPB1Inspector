@@ -31,14 +31,14 @@ public class FormEventFilters
             return false;
 
         // Check if the event type is enabled
-        return eventType switch
+        switch (eventType)
         {
-            "FormLoad" => _settings.TrackFormLoad,
-            "FormActivate" => _settings.TrackFormActivate,
-            "FormVisible" => _settings.TrackFormVisible,
-            "FormModeChange" => _settings.TrackFormModeChange,
-            "PaneChange" => _settings.TrackPaneChanges,
-            _ => false
-        };
+            case "FormLoad": return _settings.TrackFormLoad;
+            case "FormActivate": return _settings.TrackFormActivate;
+            case "FormVisible": return _settings.TrackFormVisible;
+            case "FormModeChange": return _settings.TrackFormModeChange;
+            case "PaneChange": return _settings.TrackPaneChanges;
+            default: return false;
+        }
     }
 }

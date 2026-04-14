@@ -1,9 +1,46 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+    <Reference Include="System.Net.Http" />
+  </ItemGroup>
+
+  <!--
+    SAP B1 SDK & SwissAddonFramework references.
+    These are CONDITIONAL — the project compiles without the DLLs.
+    Place the following in lib/ at the solution root:
+      - Interop.SAPbouiCOM.dll  (generated via tlbimp from SAP B1 UI API SDK)
+      - SwissAddonFramework.dll  (from B1UP / Boyum IT installation)
+    See lib/README.md for details.
+  -->
+  <!-- Define compilation symbols independently for each SDK DLL -->
+  <PropertyGroup Condition="Exists('$(MSBuildThisFileDirectory)..\..\lib\Interop.SAPbouiCOM.dll')">
+    <DefineConstants>$(DefineConstants);SAP_UI_SDK</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="Exists('$(MSBuildThisFileDirectory)..\..\lib\SwissAddonFramework.dll')">
+    <DefineConstants>$(DefineConstants);B1UP_SDK</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup Condition="Exists('$(MSBuildThisFileDirectory)..\..\lib\Interop.SAPbouiCOM.dll')">
+    <Reference Include="Interop.SAPbouiCOM">
+      <HintPath>..\..\lib\Interop.SAPbouiCOM.dll</HintPath>
+      <Private>True</Private>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup Condition="Exists('$(MSBuildThisFileDirectory)..\..\lib\SwissAddonFramework.dll')">
+    <Reference Include="SwissAddonFramework">
+      <HintPath>..\..\lib\SwissAddonFramework.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+  </ItemGroup>
 
 </Project>
