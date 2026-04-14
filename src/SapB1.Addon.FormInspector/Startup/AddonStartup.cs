@@ -2,25 +2,27 @@
 using SwissAddonFramework.Hosting;
 #endif
 using System;
+using Microsoft.Extensions.DependencyInjection;
+using SapB1.Addon.FormInspector.Configuration;
 using SapB1.Addon.FormInspector.Events;
-using SapB1.Addon.FormInspector.Inspection;
-using SapB1.Addon.FormInspector.Publishing;
-using SapB1.Addon.FormInspector.Snapshot;
 using SapB1.Addon.FormInspector.Utilities;
 
 namespace SapB1.Addon.FormInspector.Startup;
 
 /// <summary>
 /// Entry point for the SAP Business One add-on.
-/// Acts as the composition root — creates the <see cref="ISapContext"/> singleton
-/// and wires all dependencies, then delegates to <see cref="ConnectionBootstrap"/>.
+/// Uses <see cref="IServiceProvider"/> for dependency resolution.
+/// The convenience constructor builds the container via
+/// <see cref="ServiceCollectionExtensions.AddFormInspector"/>;
+/// the parameterized constructor accepts pre-resolved dependencies for testing.
 /// </summary>
-public class AddonStartup
+public class AddonStartup : IDisposable
 {
     private readonly FormEventDispatcher _eventDispatcher;
     private readonly Configuration.InspectorSettings _settings;
     private readonly ConnectionBootstrap _connectionBootstrap;
     private readonly ISapContext _sapContext;
+    private readonly ServiceProvider? _serviceProvider;
 
     public AddonStartup(
         FormEventDispatcher eventDispatcher,
@@ -32,30 +34,25 @@ public class AddonStartup
         _settings = settings;
         _connectionBootstrap = connectionBootstrap;
         _sapContext = sapContext;
+        _serviceProvider = null;
     }
 
     /// <summary>
-    /// Convenience constructor that creates a default <see cref="SapContext"/> instance
-    /// and wires all dependencies automatically.
+    /// Convenience constructor that builds a <see cref="ServiceProvider"/>
+    /// via <see cref="ServiceCollectionExtensions.AddFormInspector"/>
+    /// and resolves all dependencies automatically.
     /// </summary>
     public AddonStartup(Configuration.InspectorSettings settings)
     {
         _settings = settings;
-        _sapContext = new SapContext();
 
-        var matrixInspector = new MatrixInspector(_sapContext);
-        var itemInspector = new ItemInspector(matrixInspector, _sapContext);
-        var dataSourceInspector = new DataSourceInspector(_sapContext);
-        var formInspector = new FormInspectorService(_sapContext);
-        var sapHelpers = new Utilities.SapHelpers(_sapContext);
-        var snapshotBuilder = new Snapshot.SnapshotBuilder(itemInspector, dataSourceInspector, sapHelpers);
-        var httpPublisher = new Publishing.HttpPublisher(settings);
-        var publisher = new Publishing.SnapshotPublisher(httpPublisher);
-        var throttler = new Utilities.Throttler(settings);
+        _serviceProvider = new ServiceCollection()
+            .AddFormInspector(settings)
+            .BuildServiceProvider(validateScopes: true);
 
-        _connectionBootstrap = new ConnectionBootstrap(_sapContext);
-        _eventDispatcher = new FormEventDispatcher(
-            formInspector, snapshotBuilder, publisher, settings, throttler);
+        _sapContext = _serviceProvider.GetRequiredService<ISapContext>();
+        _connectionBootstrap = _serviceProvider.GetRequiredService<ConnectionBootstrap>();
+        _eventDispatcher = _serviceProvider.GetRequiredService<FormEventDispatcher>();
     }
 
     /// <summary>
@@ -78,5 +75,15 @@ public class AddonStartup
     {
         _eventDispatcher.UnregisterHandlers();
         _connectionBootstrap.Disconnect();
+    }
+
+    /// <summary>
+    /// Disposes the DI container and all disposable services.
+    /// Ensures graceful shutdown (unregister handlers, disconnect) before disposing resources.
+    /// </summary>
+    public void Dispose()
+    {
+        Stop();
+        _serviceProvider?.Dispose();
     }
 }

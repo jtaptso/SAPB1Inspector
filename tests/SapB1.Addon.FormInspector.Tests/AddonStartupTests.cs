@@ -108,12 +108,33 @@ public class AddonStartupTests
     public void ConvenienceConstructor_WiresDependencies()
     {
         // Act — use the convenience constructor
-        var startup = new AddonStartup(_settings);
+        using var startup = new AddonStartup(_settings);
 
         // Assert — does not throw on Start/Stop
         var startAct = () => startup.Start();
         var stopAct = () => startup.Stop();
         startAct.Should().NotThrow();
         stopAct.Should().NotThrow();
+    }
+
+    [Fact]
+    public void Dispose_CalledFromConvenienceConstructor_DisposesServiceProvider()
+    {
+        // Arrange — use the convenience constructor which creates a ServiceProvider
+        var startup = new AddonStartup(_settings);
+
+        // Act & Assert — Dispose should not throw
+        var act = () => startup.Dispose();
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void Dispose_WhenUsingParameterizedConstructor_DoesNotThrow()
+    {
+        // Arrange — parameterized constructor sets ServiceProvider to null
+        var act = () => _startup.Dispose();
+
+        // Assert — no ServiceProvider to dispose, should not throw
+        act.Should().NotThrow();
     }
 }
