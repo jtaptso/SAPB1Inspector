@@ -11,35 +11,37 @@ using SapB1.Addon.FormInspector.Utilities;
 
 namespace SapB1.Addon.FormInspector.Tests;
 
-[Collection("SapContext")]
 public class AddonStartupTests
 {
     private readonly Mock<FormEventDispatcher> _eventDispatcherMock;
     private readonly Mock<ConnectionBootstrap> _connectionBootstrapMock;
     private readonly InspectorSettings _settings;
     private readonly AddonStartup _startup;
+    private readonly SapContext _sapContext;
 
     public AddonStartupTests()
     {
-        SapContext.Reset();
+        // Fresh instance — no shared static state
+        _sapContext = new SapContext();
 
         _eventDispatcherMock = new Mock<FormEventDispatcher>(
-            new FormInspectorService(),
+            new FormInspectorService(_sapContext),
             new SnapshotBuilder(
-                new ItemInspector(new MatrixInspector()),
-                new DataSourceInspector(),
-                new SapHelpers()),
+                new ItemInspector(new MatrixInspector(_sapContext), _sapContext),
+                new DataSourceInspector(_sapContext),
+                new SapHelpers(_sapContext)),
             new SnapshotPublisher(new HttpPublisher(new InspectorSettings())),
             new InspectorSettings(),
             new Throttler(new InspectorSettings()));
 
-        _connectionBootstrapMock = new Mock<ConnectionBootstrap>();
+        _connectionBootstrapMock = new Mock<ConnectionBootstrap>(_sapContext);
         _settings = new InspectorSettings();
 
         _startup = new AddonStartup(
             _eventDispatcherMock.Object,
             _settings,
-            _connectionBootstrapMock.Object);
+            _connectionBootstrapMock.Object,
+            _sapContext);
     }
 
     [Fact]
@@ -100,5 +102,18 @@ public class AddonStartupTests
 
         // Assert
         act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void ConvenienceConstructor_WiresDependencies()
+    {
+        // Act — use the convenience constructor
+        var startup = new AddonStartup(_settings);
+
+        // Assert — does not throw on Start/Stop
+        var startAct = () => startup.Start();
+        var stopAct = () => startup.Stop();
+        startAct.Should().NotThrow();
+        stopAct.Should().NotThrow();
     }
 }

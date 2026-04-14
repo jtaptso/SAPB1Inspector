@@ -17,13 +17,20 @@ namespace SapB1.Addon.FormInspector.Inspection;
 /// </summary>
 public class FormInspectorService
 {
+    private readonly ISapContext _sapContext;
+
+    public FormInspectorService(ISapContext sapContext)
+    {
+        _sapContext = sapContext;
+    }
+
     /// <summary>
     /// Inspects a form by its SAP UniqueID and returns form-level metadata.
     /// </summary>
     public FormDto InspectForm(string formUid)
     {
 #if SAP_UI_SDK
-        var form = SapContext.TryGetForm(formUid);
+        var form = _sapContext.TryGetForm(formUid);
         if (form != null)
         {
             try
@@ -63,11 +70,11 @@ public class FormInspectorService
     public string? GetSapVersion()
     {
 #if SAP_UI_SDK
-        if (SapContext.IsInitialized && SapContext.Application != null)
+        if (_sapContext.IsInitialized && _sapContext.Application != null)
         {
             try
             {
-                return SapContext.Application.Company?.Version;
+                return _sapContext.Application.Company?.Version;
             }
             catch (Exception)
             {

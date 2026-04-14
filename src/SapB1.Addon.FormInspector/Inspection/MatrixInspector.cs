@@ -15,13 +15,20 @@ namespace SapB1.Addon.FormInspector.Inspection;
 /// </summary>
 public class MatrixInspector
 {
+    private readonly ISapContext _sapContext;
+
+    public MatrixInspector(ISapContext sapContext)
+    {
+        _sapContext = sapContext;
+    }
+
     /// <summary>
     /// Inspects a matrix control by its UID on a given form.
     /// </summary>
     public MatrixDto InspectMatrix(string formUid, string matrixUid)
     {
 #if SAP_UI_SDK
-        var form = SapContext.TryGetForm(formUid);
+        var form = _sapContext.TryGetForm(formUid);
         if (form != null)
         {
             try
@@ -91,7 +98,7 @@ public class MatrixInspector
     public List<MatrixDto> InspectAllMatrices(string formUid)
     {
 #if SAP_UI_SDK
-        var form = SapContext.TryGetForm(formUid);
+        var form = _sapContext.TryGetForm(formUid);
         if (form != null)
         {
             var matrices = new List<MatrixDto>();

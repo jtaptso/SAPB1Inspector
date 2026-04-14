@@ -4,20 +4,21 @@ using SapB1.Addon.FormInspector.Utilities;
 
 namespace SapB1.Addon.FormInspector.Tests;
 
-[Collection("SapContext")]
 public class ConnectionBootstrapTests
 {
+    private readonly SapContext _sapContext;
+
     public ConnectionBootstrapTests()
     {
-        // Ensure clean state before each test
-        SapContext.Reset();
+        // Fresh instance per test — no shared static state
+        _sapContext = new SapContext();
     }
 
     [Fact]
     public void IsConnected_BeforeConnect_ReturnsFalse()
     {
         // Arrange
-        var bootstrap = new ConnectionBootstrap();
+        var bootstrap = new ConnectionBootstrap(_sapContext);
 
         // Assert
         bootstrap.IsConnected.Should().BeFalse();
@@ -27,7 +28,7 @@ public class ConnectionBootstrapTests
     public void IsConnected_AfterDisconnect_ReturnsFalse()
     {
         // Arrange
-        var bootstrap = new ConnectionBootstrap();
+        var bootstrap = new ConnectionBootstrap(_sapContext);
 
         // Act
         bootstrap.Disconnect();
@@ -40,7 +41,7 @@ public class ConnectionBootstrapTests
     public void Disconnect_WhenNotConnected_DoesNotThrow()
     {
         // Arrange
-        var bootstrap = new ConnectionBootstrap();
+        var bootstrap = new ConnectionBootstrap(_sapContext);
 
         // Act
         var act = () => bootstrap.Disconnect();
@@ -53,7 +54,7 @@ public class ConnectionBootstrapTests
     public void Connect_WithoutSdk_DoesNotThrow()
     {
         // Arrange
-        var bootstrap = new ConnectionBootstrap();
+        var bootstrap = new ConnectionBootstrap(_sapContext);
 
         // Act
         var act = () => bootstrap.Connect();
@@ -66,11 +67,11 @@ public class ConnectionBootstrapTests
     public void IsConnected_DelegatesToSapContext()
     {
         // Arrange
-        var bootstrap = new ConnectionBootstrap();
+        var bootstrap = new ConnectionBootstrap(_sapContext);
         bootstrap.IsConnected.Should().BeFalse();
 
         // Act — manually initialize SapContext to simulate a successful connection
-        SapContext.Initialize(new object());
+        _sapContext.Initialize(new object());
 
         // Assert — IsConnected reflects SapContext state
         bootstrap.IsConnected.Should().BeTrue();
@@ -80,8 +81,8 @@ public class ConnectionBootstrapTests
     public void Disconnect_ResetsSapContext()
     {
         // Arrange
-        SapContext.Initialize(new object());
-        var bootstrap = new ConnectionBootstrap();
+        _sapContext.Initialize(new object());
+        var bootstrap = new ConnectionBootstrap(_sapContext);
         bootstrap.IsConnected.Should().BeTrue();
 
         // Act
@@ -89,6 +90,6 @@ public class ConnectionBootstrapTests
 
         // Assert
         bootstrap.IsConnected.Should().BeFalse();
-        SapContext.IsInitialized.Should().BeFalse();
+        _sapContext.IsInitialized.Should().BeFalse();
     }
 }

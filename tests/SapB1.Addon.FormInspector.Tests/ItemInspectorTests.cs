@@ -8,19 +8,19 @@ using SapB1.Addon.FormInspector.Utilities;
 
 namespace SapB1.Addon.FormInspector.Tests;
 
-[Collection("SapContext")]
 public class ItemInspectorTests
 {
     private readonly ItemInspector _inspector;
     private readonly Mock<MatrixInspector> _matrixInspectorMock;
+    private readonly SapContext _sapContext;
 
     public ItemInspectorTests()
     {
-        // Ensure SapContext is not initialized (non-SDK code path)
-        SapContext.Reset();
+        // Fresh instance — no shared static state
+        _sapContext = new SapContext();
 
-        _matrixInspectorMock = new Mock<MatrixInspector>();
-        _inspector = new ItemInspector(_matrixInspectorMock.Object);
+        _matrixInspectorMock = new Mock<MatrixInspector>(_sapContext);
+        _inspector = new ItemInspector(_matrixInspectorMock.Object, _sapContext);
     }
 
     [Fact]

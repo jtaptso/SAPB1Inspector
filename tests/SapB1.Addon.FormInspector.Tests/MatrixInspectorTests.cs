@@ -6,16 +6,16 @@ using SapB1.Addon.FormInspector.Utilities;
 
 namespace SapB1.Addon.FormInspector.Tests;
 
-[Collection("SapContext")]
 public class MatrixInspectorTests
 {
     private readonly MatrixInspector _inspector;
+    private readonly SapContext _sapContext;
 
     public MatrixInspectorTests()
     {
-        // Ensure SapContext is not initialized (non-SDK code path)
-        SapContext.Reset();
-        _inspector = new MatrixInspector();
+        // Fresh instance — no shared static state
+        _sapContext = new SapContext();
+        _inspector = new MatrixInspector(_sapContext);
     }
 
     [Fact]

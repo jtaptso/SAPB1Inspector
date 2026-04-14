@@ -3,16 +3,16 @@ using SapB1.Addon.FormInspector.Utilities;
 
 namespace SapB1.Addon.FormInspector.Tests;
 
-[Collection("SapContext")]
 public class SapHelpersTests
 {
     private readonly SapHelpers _helpers;
+    private readonly SapContext _sapContext;
 
     public SapHelpersTests()
     {
-        // Ensure SapContext is not initialized (non-SDK code path)
-        SapContext.Reset();
-        _helpers = new SapHelpers();
+        // Fresh instance — no shared static state
+        _sapContext = new SapContext();
+        _helpers = new SapHelpers(_sapContext);
     }
 
     [Fact]

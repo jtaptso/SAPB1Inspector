@@ -19,10 +19,12 @@ namespace SapB1.Addon.FormInspector.Inspection;
 public class ItemInspector
 {
     private readonly MatrixInspector _matrixInspector;
+    private readonly ISapContext _sapContext;
 
-    public ItemInspector(MatrixInspector matrixInspector)
+    public ItemInspector(MatrixInspector matrixInspector, ISapContext sapContext)
     {
         _matrixInspector = matrixInspector;
+        _sapContext = sapContext;
     }
 
     /// <summary>
@@ -31,7 +33,7 @@ public class ItemInspector
     public ItemDto InspectItem(string formUid, string itemUid)
     {
 #if SAP_UI_SDK
-        var form = SapContext.TryGetForm(formUid);
+        var form = _sapContext.TryGetForm(formUid);
         if (form != null)
         {
             try
@@ -76,7 +78,7 @@ public class ItemInspector
     public List<ItemDto> InspectAllItems(string formUid)
     {
 #if SAP_UI_SDK
-        var form = SapContext.TryGetForm(formUid);
+        var form = _sapContext.TryGetForm(formUid);
         if (form != null)
         {
             var items = new List<ItemDto>();

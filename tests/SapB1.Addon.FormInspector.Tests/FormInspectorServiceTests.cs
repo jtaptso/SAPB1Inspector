@@ -4,16 +4,16 @@ using SapB1.Addon.FormInspector.Utilities;
 
 namespace SapB1.Addon.FormInspector.Tests;
 
-[Collection("SapContext")]
 public class FormInspectorServiceTests
 {
     private readonly FormInspectorService _service;
+    private readonly SapContext _sapContext;
 
     public FormInspectorServiceTests()
     {
-        // Ensure SapContext is not initialized (non-SDK code path)
-        SapContext.Reset();
-        _service = new FormInspectorService();
+        // Fresh instance — no shared static state
+        _sapContext = new SapContext();
+        _service = new FormInspectorService(_sapContext);
     }
 
     [Fact]

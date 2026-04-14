@@ -6,16 +6,16 @@ using SapB1.Addon.FormInspector.Utilities;
 
 namespace SapB1.Addon.FormInspector.Tests;
 
-[Collection("SapContext")]
 public class DataSourceInspectorTests
 {
     private readonly DataSourceInspector _inspector;
+    private readonly SapContext _sapContext;
 
     public DataSourceInspectorTests()
     {
-        // Ensure SapContext is not initialized (non-SDK code path)
-        SapContext.Reset();
-        _inspector = new DataSourceInspector();
+        // Fresh instance — no shared static state
+        _sapContext = new SapContext();
+        _inspector = new DataSourceInspector(_sapContext);
     }
 
     [Fact]

@@ -3,55 +3,83 @@ using System;
 namespace SapB1.Addon.FormInspector.Utilities;
 
 /// <summary>
-/// Provides centralized access to the SAP Business One Application object.
-/// Initialized once during add-on startup, then used by all inspectors.
+/// Abstraction for SAP Business One context access.
+/// Injected into inspectors and startup components to decouple them
+/// from static state, enabling isolated unit testing.
 /// </summary>
-public static class SapContext
+public interface ISapContext
 {
-    /// <summary>
-    /// The SAP UI API Application object.
-    /// Set during add-on startup via <see cref="Initialize"/>.
-    /// </summary>
+    /// <summary>Whether the SAP context has been initialized.</summary>
+    bool IsInitialized { get; }
+
+    /// <summary>Resets the context (used during shutdown or in tests).</summary>
+    void Reset();
+
 #if SAP_UI_SDK
-    public static SAPbouiCOM.Application? Application { get; private set; }
+    /// <summary>The SAP UI API Application object.</summary>
+    SAPbouiCOM.Application? Application { get; }
+
+    /// <summary>Initializes the context with the Application object.</summary>
+    void Initialize(SAPbouiCOM.Application application);
+
+    /// <summary>
+    /// Resolves a form by its UniqueID.
+    /// Throws if the context is not initialized or the form is not found.
+    /// </summary>
+    SAPbouiCOM.Form GetForm(string formUid);
+
+    /// <summary>
+    /// Attempts to resolve a form by its UniqueID.
+    /// Returns null if the form is not found or the context is not initialized.
+    /// </summary>
+    SAPbouiCOM.Form? TryGetForm(string formUid);
 #else
-    public static object? Application { get; private set; }
+    /// <summary>The SAP Application object (untyped when SDK is not available).</summary>
+    object? Application { get; }
+
+    /// <summary>Initializes the context with the Application object.</summary>
+    void Initialize(object application);
+#endif
+}
+
+/// <summary>
+/// Default implementation of <see cref="ISapContext"/>.
+/// Holds the SAP Business One Application object and provides form resolution.
+/// Injected as a singleton via constructor injection — no static state.
+/// </summary>
+public class SapContext : ISapContext
+{
+    /// <inheritdoc/>
+#if SAP_UI_SDK
+    public SAPbouiCOM.Application? Application { get; private set; }
+#else
+    public object? Application { get; private set; }
 #endif
 
-    /// <summary>
-    /// Whether the SAP context has been initialized.
-    /// </summary>
-    public static bool IsInitialized { get; private set; }
+    /// <inheritdoc/>
+    public bool IsInitialized { get; private set; }
 
-    /// <summary>
-    /// Initializes the SAP context with the Application object.
-    /// Called once during add-on startup.
-    /// </summary>
+    /// <inheritdoc/>
 #if SAP_UI_SDK
-    public static void Initialize(SAPbouiCOM.Application application)
+    public void Initialize(SAPbouiCOM.Application application)
 #else
-    public static void Initialize(object application)
+    public void Initialize(object application)
 #endif
     {
         Application = application ?? throw new ArgumentNullException(nameof(application));
         IsInitialized = true;
     }
 
-    /// <summary>
-    /// Resets the context (used in tests or during shutdown).
-    /// </summary>
-    public static void Reset()
+    /// <inheritdoc/>
+    public void Reset()
     {
         Application = null;
         IsInitialized = false;
     }
 
 #if SAP_UI_SDK
-    /// <summary>
-    /// Resolves a form by its UniqueID.
-    /// Throws if the context is not initialized or the form is not found.
-    /// </summary>
-    public static SAPbouiCOM.Form GetForm(string formUid)
+    /// <inheritdoc/>
+    public SAPbouiCOM.Form GetForm(string formUid)
     {
         if (!IsInitialized || Application == null)
             throw new InvalidOperationException("SapContext is not initialized. Call Initialize() during startup.");
@@ -67,11 +95,8 @@ public static class SapContext
         }
     }
 
-    /// <summary>
-    /// Attempts to resolve a form by its UniqueID.
-    /// Returns null if the form is not found or the context is not initialized.
-    /// </summary>
-    public static SAPbouiCOM.Form? TryGetForm(string formUid)
+    /// <inheritdoc/>
+    public SAPbouiCOM.Form? TryGetForm(string formUid)
     {
         if (!IsInitialized || Application == null)
             return null;

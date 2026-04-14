@@ -12,8 +12,15 @@ namespace SapB1.Addon.FormInspector.Startup;
 /// </summary>
 public class ConnectionBootstrap
 {
+    private readonly ISapContext _sapContext;
+
+    public ConnectionBootstrap(ISapContext sapContext)
+    {
+        _sapContext = sapContext;
+    }
+
     /// <summary>Indicates whether the add-on is connected to the SAP client.</summary>
-    public bool IsConnected => SapContext.IsInitialized;
+    public bool IsConnected => _sapContext.IsInitialized;
 
     /// <summary>
     /// Establishes the connection to the SAP Business One client.
@@ -26,7 +33,7 @@ public class ConnectionBootstrap
             var connection = SwissAddonFramework.Hosting.Startup.Initialize();
             if (connection != null)
             {
-                SapContext.Initialize(connection.Application);
+                _sapContext.Initialize(connection.Application);
             }
         }
         catch (Exception)
@@ -35,14 +42,14 @@ public class ConnectionBootstrap
         }
 #endif
 #if SAP_UI_SDK
-        if (!SapContext.IsInitialized)
+        if (!_sapContext.IsInitialized)
         {
             try
             {
                 var sboGuiApi = new SAPbouiCOM.SboGuiApi();
                 sboGuiApi.Connect(GetConnectionString());
                 var application = sboGuiApi.GetApplication();
-                SapContext.Initialize(application);
+                _sapContext.Initialize(application);
             }
             catch (Exception)
             {
@@ -58,7 +65,7 @@ public class ConnectionBootstrap
     /// </summary>
     public virtual void Disconnect()
     {
-        SapContext.Reset();
+        _sapContext.Reset();
     }
 
 #if SAP_UI_SDK

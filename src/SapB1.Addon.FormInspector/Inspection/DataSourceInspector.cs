@@ -15,13 +15,20 @@ namespace SapB1.Addon.FormInspector.Inspection;
 /// </summary>
 public class DataSourceInspector
 {
+    private readonly ISapContext _sapContext;
+
+    public DataSourceInspector(ISapContext sapContext)
+    {
+        _sapContext = sapContext;
+    }
+
     /// <summary>
     /// Inspects all DB data sources on a given form.
     /// </summary>
     public List<DataSourceInfo> InspectDataSources(string formUid)
     {
 #if SAP_UI_SDK
-        var form = SapContext.TryGetForm(formUid);
+        var form = _sapContext.TryGetForm(formUid);
         if (form != null)
         {
             var dataSources = new List<DataSourceInfo>();
@@ -67,7 +74,7 @@ public class DataSourceInspector
     public DataBindingDto? GetDataBinding(string formUid, string itemUid)
     {
 #if SAP_UI_SDK
-        var form = SapContext.TryGetForm(formUid);
+        var form = _sapContext.TryGetForm(formUid);
         if (form != null)
         {
             try

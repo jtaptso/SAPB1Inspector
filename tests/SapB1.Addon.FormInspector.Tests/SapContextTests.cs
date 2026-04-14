@@ -3,50 +3,51 @@ using SapB1.Addon.FormInspector.Utilities;
 
 namespace SapB1.Addon.FormInspector.Tests;
 
-[Collection("SapContext")]
 public class SapContextTests
 {
+    private readonly SapContext _sapContext;
+
     public SapContextTests()
     {
-        // Ensure clean state before each test
-        SapContext.Reset();
+        // Fresh instance per test — no shared static state
+        _sapContext = new SapContext();
     }
 
     [Fact]
     public void IsInitialized_BeforeInitialize_ReturnsFalse()
     {
         // Assert
-        SapContext.IsInitialized.Should().BeFalse();
+        _sapContext.IsInitialized.Should().BeFalse();
     }
 
     [Fact]
     public void IsInitialized_AfterInitialize_ReturnsTrue()
     {
         // Arrange & Act
-        SapContext.Initialize(new object());
+        _sapContext.Initialize(new object());
 
         // Assert
-        SapContext.IsInitialized.Should().BeTrue();
+        _sapContext.IsInitialized.Should().BeTrue();
     }
 
     [Fact]
     public void IsInitialized_AfterReset_ReturnsFalse()
     {
         // Arrange
-        SapContext.Initialize(new object());
+        _sapContext.Initialize(new object());
 
         // Act
-        SapContext.Reset();
+        _sapContext.Reset();
 
         // Assert
-        SapContext.IsInitialized.Should().BeFalse();
+        _sapContext.IsInitialized.Should().BeFalse();
     }
 
     [Fact]
     public void Initialize_NullArgument_ThrowsArgumentNullException()
     {
         // Act & Assert
-        var act = () => SapContext.Initialize(null!);
+        var act = () => _sapContext.Initialize(null!);
         act.Should().Throw<ArgumentNullException>().WithParameterName("application");
     }
 
@@ -54,7 +55,7 @@ public class SapContextTests
     public void Application_BeforeInitialize_IsNull()
     {
         // Assert
-        SapContext.Application.Should().BeNull();
+        _sapContext.Application.Should().BeNull();
     }
 
     [Fact]
@@ -64,23 +65,23 @@ public class SapContextTests
         var app = new object();
 
         // Act
-        SapContext.Initialize(app);
+        _sapContext.Initialize(app);
 
         // Assert
-        SapContext.Application.Should().BeSameAs(app);
+        _sapContext.Application.Should().BeSameAs(app);
     }
 
     [Fact]
     public void Application_AfterReset_IsNull()
     {
         // Arrange
-        SapContext.Initialize(new object());
+        _sapContext.Initialize(new object());
 
         // Act
-        SapContext.Reset();
+        _sapContext.Reset();
 
         // Assert
-        SapContext.Application.Should().BeNull();
+        _sapContext.Application.Should().BeNull();
     }
 
     [Fact]
@@ -91,10 +92,25 @@ public class SapContextTests
         var app2 = new object();
 
         // Act
-        SapContext.Initialize(app1);
-        SapContext.Initialize(app2);
+        _sapContext.Initialize(app1);
+        _sapContext.Initialize(app2);
 
         // Assert
-        SapContext.Application.Should().BeSameAs(app2);
+        _sapContext.Application.Should().BeSameAs(app2);
+    }
+
+    [Fact]
+    public void Instances_AreIsolated()
+    {
+        // Arrange — two independent instances
+        var ctx1 = new SapContext();
+        var ctx2 = new SapContext();
+
+        // Act — initialize only ctx1
+        ctx1.Initialize(new object());
+
+        // Assert — ctx2 is unaffected
+        ctx1.IsInitialized.Should().BeTrue();
+        ctx2.IsInitialized.Should().BeFalse();
     }
 }

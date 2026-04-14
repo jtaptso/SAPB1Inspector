@@ -14,6 +14,13 @@ namespace SapB1.Addon.FormInspector.Utilities;
 /// </summary>
 public class SapHelpers
 {
+    private readonly ISapContext _sapContext;
+
+    public SapHelpers(ISapContext sapContext)
+    {
+        _sapContext = sapContext;
+    }
+
     /// <summary>
     /// Gets the current SAP user name.
     /// </summary>
@@ -30,11 +37,11 @@ public class SapHelpers
         }
 #endif
 #if SAP_UI_SDK
-        if (SapContext.IsInitialized && SapContext.Application != null)
+        if (_sapContext.IsInitialized && _sapContext.Application != null)
         {
             try
             {
-                return SapContext.Application.Company?.UserName;
+                return _sapContext.Application.Company?.UserName;
             }
             catch (Exception)
             {
@@ -51,13 +58,13 @@ public class SapHelpers
     public string? GetClientId()
     {
 #if SAP_UI_SDK
-        if (SapContext.IsInitialized && SapContext.Application != null)
+        if (_sapContext.IsInitialized && _sapContext.Application != null)
         {
             try
             {
                 // The Application doesn't expose a direct client ID,
                 // but we can derive one from the connection cookie or session info
-                var company = SapContext.Application.Company;
+                var company = _sapContext.Application.Company;
                 if (company != null)
                 {
                     return $"{company.CompanyName}@{company.Server}";
@@ -78,11 +85,11 @@ public class SapHelpers
     public string? GetCompanyDb()
     {
 #if SAP_UI_SDK
-        if (SapContext.IsInitialized && SapContext.Application != null)
+        if (_sapContext.IsInitialized && _sapContext.Application != null)
         {
             try
             {
-                return SapContext.Application.Company?.CompanyDB;
+                return _sapContext.Application.Company?.CompanyDB;
             }
             catch (Exception)
             {

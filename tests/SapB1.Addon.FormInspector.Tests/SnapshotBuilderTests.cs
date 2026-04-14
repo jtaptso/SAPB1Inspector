@@ -7,22 +7,22 @@ using SapB1.Addon.FormInspector.Utilities;
 
 namespace SapB1.Addon.FormInspector.Tests;
 
-[Collection("SapContext")]
 public class SnapshotBuilderTests
 {
     private readonly SnapshotBuilder _builder;
     private readonly ItemInspector _itemInspector;
     private readonly DataSourceInspector _dataSourceInspector;
     private readonly SapHelpers _sapHelpers;
+    private readonly SapContext _sapContext;
 
     public SnapshotBuilderTests()
     {
-        // Ensure SapContext is not initialized (non-SDK code path)
-        SapContext.Reset();
+        // Fresh instance — no shared static state
+        _sapContext = new SapContext();
 
-        _itemInspector = new ItemInspector(new MatrixInspector());
-        _dataSourceInspector = new DataSourceInspector();
-        _sapHelpers = new SapHelpers();
+        _itemInspector = new ItemInspector(new MatrixInspector(_sapContext), _sapContext);
+        _dataSourceInspector = new DataSourceInspector(_sapContext);
+        _sapHelpers = new SapHelpers(_sapContext);
         _builder = new SnapshotBuilder(_itemInspector, _dataSourceInspector, _sapHelpers);
     }
 
